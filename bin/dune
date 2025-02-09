@@ -1,0 +1,4 @@
+(executable
+ (public_name minichat)
+ (name main)
+ (libraries minichat))
