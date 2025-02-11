@@ -1,2 +1,3 @@
 (library
- (name minichat))
+ (name minichat)
+ (libraries lwt.unix logs logs.lwt))
