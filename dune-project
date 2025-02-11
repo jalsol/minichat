@@ -11,11 +11,11 @@
 
 (maintainers "Nguyen Quang Truong <nqtruong.1002@gmail.com>")
 
-(license Unlicensed)
+(license Unlicense)
 
 (package
  (name minichat)
  (synopsis "Minichat")
  (description "A mini-chat application in OCaml")
- (depends ocaml))
+ (depends ocaml lwt logs))
 

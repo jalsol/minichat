@@ -4,12 +4,15 @@ synopsis: "Minichat"
 description: "A mini-chat application in OCaml"
 maintainer: ["Nguyen Quang Truong <nqtruong.1002@gmail.com>"]
 authors: ["Nguyen Quang Truong <nqtruong.1002@gmail.com>"]
-license: "Unlicensed"
+license: "Unlicense"
 homepage: "https://github.com/jalsol/minichat"
 bug-reports: "https://github.com/jalsol/minichat/issues"
 depends: [
   "dune" {>= "3.17"}
   "ocaml"
+  "lwt"
+  "logs"
+  "logs"
   "odoc" {with-doc}
 ]
 build: [
