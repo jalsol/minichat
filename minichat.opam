@@ -12,7 +12,6 @@ depends: [
   "ocaml"
   "lwt"
   "logs"
-  "logs"
   "odoc" {with-doc}
 ]
 build: [
