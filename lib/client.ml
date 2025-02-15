@@ -26,4 +26,12 @@ let run host port =
     Logs.set_reporter (Logs.format_reporter ());
     Logs.info (fun m -> m "Connecting to %s:%d" host port);
     let* in_chan, out_chan = connect_to_server host port in
-    Lwt.pick [receive_messages in_chan; client_input_loop out_chan]
+
+    let shutdown_signal = Lwt_mvar.create_empty () in
+    let _ = Lwt_unix.on_signal Sys.sigint (fun _ ->
+        Logs.app (fun m -> m "Disconnecting from server...");
+        Lwt.async (fun () -> Lwt_mvar.put shutdown_signal ())
+    ) in
+
+    let* () = Lwt.pick [receive_messages in_chan; client_input_loop out_chan; Lwt_mvar.take shutdown_signal] in
+    Lwt_io.close out_chan

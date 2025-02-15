@@ -55,4 +55,12 @@ let run port =
     Logs.set_reporter (Logs.format_reporter ());
     Logs.info (fun m -> m "Starting server on port %d" port);
     let* sock = create_socket port in
-    Lwt_main.run @@ serve sock
+
+    let shutdown_signal = Lwt_mvar.create_empty () in
+    let _ = Lwt_unix.on_signal Sys.sigint (fun _ ->
+        Logs.app (fun m -> m "Shutting down server...");
+        Lwt.async (fun () -> Lwt_mvar.put shutdown_signal ())
+    ) in
+
+    let* () = Lwt.pick [serve sock; Lwt_mvar.take shutdown_signal] in
+    Lwt_unix.close sock
