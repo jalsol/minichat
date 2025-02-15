@@ -31,10 +31,10 @@ let main =
     check_args ();
     match !mode with
     | "server" ->
-        Server.run_server !port
+        Server.run !port
     | "client" ->
         failwith "Not implemented"
     | _ ->
         failwith "Error: --mode must be 'server' or 'client'"
 
-let () = main
+let () = Lwt_main.run main
