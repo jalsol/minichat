@@ -33,7 +33,7 @@ let main =
     | "server" ->
         Server.run !port
     | "client" ->
-        failwith "Not implemented"
+        Client.run !host !port
     | _ ->
         failwith "Error: --mode must be 'server' or 'client'"
 
