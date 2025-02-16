@@ -5,13 +5,12 @@ let host = ref ""
 let port = ref 0
 
 let speclist = [
-    ("--mode", Arg.Set_string mode, "Mode: server or client");
-    ("--host", Arg.Set_string host, "Host address (required for client mode)");
-    ("--port", Arg.Set_int port, "Port number (required)");
+    ("-m", Arg.Set_string mode, "Mode: \"server\" or \"client\"");
+    ("-h", Arg.Set_string host, "Host address (required for client mode)");
+    ("-p", Arg.Set_int port, "Port number (required)");
 ]
 
-let usage_msg =
-    "Usage: program --mode [server|client] --port <num> [--host <addr>]"
+let usage_msg = "Usage: minichat -m [server|client] -p <port> [-h <address>]"
 
 let check_args () =
     match !mode with
@@ -37,4 +36,5 @@ let main =
     | _ ->
         failwith "Error: --mode must be 'server' or 'client'"
 
-let () = Lwt_main.run main
+let () =
+    Lwt_main.run main
