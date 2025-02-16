@@ -11,25 +11,19 @@ let create_socket port =
     Lwt_unix.listen sock backlog;
     Lwt.return sock
 
-let rec handle_connection in_chan =
-    let* msg = Lwt_io.read_line_opt in_chan in
-    match msg with
-    | Some msg ->
-        Logs.app (fun m -> m "Client: %s" msg);
-        handle_connection in_chan
-    | None ->
-        let* () = Logs_lwt.info (fun m -> m "Client disconnected") in
-        current_client := None;
-        Lwt.return_unit
+let process_messages in_chan out_chan addr =
+    Protocol.Common.process_messages in_chan out_chan
+        ~on_data:(fun id content ->
+            Logs_lwt.app (fun m -> m "Client[%d]: %s" id content))
+        ~on_ack:(fun id rtt ->
+            Logs_lwt.app (fun m -> m "ACK %d: %.2fms" id rtt))
+        ~on_disconnect:(fun () ->
+            let* () = Logs_lwt.info (fun m -> m "%s disconnected" addr) in
+            current_client := None;
+            Lwt.return_unit)
 
-let rec server_input_loop () =
-    match !current_client with
-    | Some out_chan ->
-        let* msg = Lwt_io.read_line Lwt_io.stdin in
-        let* () = Lwt_io.write_line out_chan msg in
-        server_input_loop ()
-    | None ->
-        server_input_loop ()
+let input_loop =
+    Protocol.Common.input_loop
 
 let string_of_sockaddr = function
     | Unix.ADDR_INET (addr, port) ->
@@ -37,17 +31,21 @@ let string_of_sockaddr = function
     | Unix.ADDR_UNIX path ->
         path
 
-let accept_connection (client_sock, client_sockaddr) =
+let handle_connection (client_sock, client_sockaddr) =
     let in_chan = Lwt_io.of_fd ~mode:Input client_sock in
     let out_chan = Lwt_io.of_fd ~mode:Output client_sock in
+    let addr = string_of_sockaddr client_sockaddr in
     current_client := Some out_chan;
     let* () = Logs_lwt.info
-        (fun m -> m "Client conected: %s" (string_of_sockaddr client_sockaddr)) in
-    Lwt.pick [handle_connection in_chan; server_input_loop ()]
+        (fun m -> m "Client conected: %s" addr) in
+    Lwt.pick [
+        process_messages in_chan out_chan addr;
+        input_loop out_chan;
+    ]
 
 let rec serve sock =
     let* client = Lwt_unix.accept sock in
-    let* () = accept_connection client in
+    let* () = handle_connection client in
     serve sock
 
 let run port =

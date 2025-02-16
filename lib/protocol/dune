@@ -1,0 +1,4 @@
+(library
+ (name protocol)
+ (libraries lwt lwt.unix logs.lwt)
+ (modules message rtt common))

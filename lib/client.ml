@@ -6,20 +6,17 @@ let connect_to_server host port =
     let* () = Lwt_unix.connect sock sockaddr in
     Lwt.return (Lwt_io.of_fd ~mode:Input sock, Lwt_io.of_fd ~mode:Output sock)
 
-let rec receive_messages in_chan =
-    let* msg = Lwt_io.read_line_opt in_chan in
-    match msg with
-    | Some msg ->
-        Logs.app (fun m -> m "Server: %s" msg);
-        receive_messages in_chan
-    | None ->
-        let* () = Logs_lwt.info (fun m -> m "Server disconnected") in
-        Lwt.return_unit
+let process_messages in_chan out_chan =
+    Protocol.Common.process_messages in_chan out_chan
+        ~on_data:(fun id content ->
+            Logs_lwt.app (fun m -> m "Server[%d]: %s" id content))
+        ~on_ack:(fun id rtt ->
+            Logs_lwt.app (fun m -> m "ACK %d: %.2fms" id rtt))
+        ~on_disconnect:(fun () ->
+            Logs_lwt.info (fun m -> m "Server disconnected"))
 
-let rec client_input_loop out_chan =
-    let* msg = Lwt_io.read_line Lwt_io.stdin in
-    let* () = Lwt_io.write_line out_chan msg in
-    client_input_loop out_chan
+let input_loop =
+    Protocol.Common.input_loop
 
 let run host port =
     Logs.set_level (Some Logs.Info);
@@ -33,5 +30,9 @@ let run host port =
         Lwt.async (fun () -> Lwt_mvar.put shutdown_signal ())
     ) in
 
-    let* () = Lwt.pick [receive_messages in_chan; client_input_loop out_chan; Lwt_mvar.take shutdown_signal] in
+    let* () = Lwt.pick [
+        process_messages in_chan out_chan;
+        input_loop out_chan;
+        Lwt_mvar.take shutdown_signal
+    ] in
     Lwt_io.close out_chan
