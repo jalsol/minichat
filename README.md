@@ -1,5 +1,7 @@
 # minichat
 
+![minichat example](https://i.imgur.com/UT8JMI3.png)
+
 **minichat** is a minimalistic one-on-one server-client chat application implemented in OCaml.
 It serves as a simple example of network communication and concurrency in OCaml.
 
@@ -51,8 +53,6 @@ In another machine/terminal session, run the application in client mode:
 ```sh
 dune exec -- minichat -m client -h <address> -p <port>
 ```
-
-You can start multiple clients, each in a separate terminal window.
 
 3. **Chat**:
 
